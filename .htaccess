@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------
+# Performance: compression + browser caching
+# All blocks are guarded by <IfModule> so this file is harmless if a
+# given Apache module is unavailable. (No effect on non-Apache hosts.)
+# ---------------------------------------------------------------------
+
+# ----- GZIP / DEFLATE compression for text assets -----
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+  AddOutputFilterByType DEFLATE application/javascript application/x-javascript text/javascript
+  AddOutputFilterByType DEFLATE application/json application/xml application/rss+xml
+  AddOutputFilterByType DEFLATE image/svg+xml application/x-font-ttf application/vnd.ms-fontobject font/ttf font/otf
+</IfModule>
+
+# ----- Brotli (if available) -----
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css
+  AddOutputFilterByType BROTLI_COMPRESS application/javascript text/javascript application/json
+  AddOutputFilterByType BROTLI_COMPRESS image/svg+xml font/ttf font/otf
+</IfModule>
+
+# ----- Browser caching via Expires -----
+<IfModule mod_expires.c>
+  ExpiresActive On
+  # Images / video / fonts: rarely change -> cache a long time
+  ExpiresByType image/jpeg                 "access plus 1 year"
+  ExpiresByType image/png                  "access plus 1 year"
+  ExpiresByType image/webp                 "access plus 1 year"
+  ExpiresByType image/gif                  "access plus 1 year"
+  ExpiresByType image/svg+xml              "access plus 1 year"
+  ExpiresByType image/x-icon               "access plus 1 year"
+  ExpiresByType video/mp4                  "access plus 1 year"
+  ExpiresByType font/woff                  "access plus 1 year"
+  ExpiresByType font/woff2                 "access plus 1 year"
+  ExpiresByType application/font-woff      "access plus 1 year"
+  ExpiresByType application/font-woff2     "access plus 1 year"
+  # CSS / JS: cache a week (update versions on change to bust cache)
+  ExpiresByType text/css                   "access plus 7 days"
+  ExpiresByType application/javascript     "access plus 7 days"
+  ExpiresByType text/javascript            "access plus 7 days"
+  # HTML: keep fresh
+  ExpiresByType text/html                  "access plus 1 hour"
+</IfModule>
+
+# ----- Cache-Control headers (mirror of the above) -----
+<IfModule mod_headers.c>
+  <FilesMatch "\.(jpg|jpeg|png|webp|gif|svg|ico|mp4|woff|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+  <FilesMatch "\.(html)$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+</IfModule>
